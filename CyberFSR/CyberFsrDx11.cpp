@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "CyberFsr.h"
+#include "CyberXe.h"
 
 NVSDK_NGX_Result NVSDK_NGX_D3D11_Init(void)
 {

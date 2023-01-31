@@ -6,8 +6,9 @@ std::pair<uintptr_t, uintptr_t> GetModule(const std::wstring_view moduleName)
 	const static uintptr_t moduleBase = reinterpret_cast<uintptr_t>(GetModuleHandleW(moduleName.data()));
 	const static uintptr_t moduleEnd = [&]()
 	{
-		auto ntHeaders = reinterpret_cast<PIMAGE_NT_HEADERS64>(moduleBase + reinterpret_cast<PIMAGE_DOS_HEADER>(moduleBase)->e_lfanew);
-		return static_cast<uintptr_t>(moduleBase + ntHeaders->OptionalHeader.SizeOfImage);
+		const auto ntHeaders =
+			reinterpret_cast<PIMAGE_NT_HEADERS64>(moduleBase + reinterpret_cast<PIMAGE_DOS_HEADER>(moduleBase)->e_lfanew);
+		return moduleBase + ntHeaders->OptionalHeader.SizeOfImage;
 	}();
 
 	return { moduleBase, moduleEnd };
@@ -35,11 +36,11 @@ uintptr_t FindPattern(uintptr_t startAddress, uintptr_t maxSize, const char* mas
 	const auto dataStart = reinterpret_cast<const uint8_t*>(startAddress);
 	const auto dataEnd = dataStart + maxSize + 1;
 
-	auto sig = std::search(dataStart, dataEnd, pattern.begin(), pattern.end(),
-		[](uint8_t currentByte, std::pair<uint8_t, bool> Pattern)
-		{
-			return Pattern.second || (currentByte == Pattern.first);
-		});
+	const auto sig = std::search(dataStart, dataEnd, pattern.begin(), pattern.end(),
+	                             [](uint8_t currentByte, std::pair<uint8_t, bool> Pattern)
+	                             {
+		                             return Pattern.second || (currentByte == Pattern.first);
+	                             });
 
 	if (sig == dataEnd)
 		return NULL;
@@ -56,21 +57,25 @@ uintptr_t scanner::GetAddress(const std::wstring_view moduleName, const std::str
 		if (address == NULL)
 			throw std::runtime_error("Failed to find pattern");
 
-		return (address + offset);
+		return address + offset;
 	}
+	return 0;
 }
 
 uintptr_t scanner::GetOffsetFromInstruction(const std::wstring_view moduleName, const std::string_view pattern, ptrdiff_t offset)
 {
 	if (GetModuleHandleW(moduleName.data()) != nullptr)
 	{
-		uintptr_t address = FindPattern(GetModule(moduleName.data()).first, GetModule(moduleName.data()).second - GetModule(moduleName.data()).first, pattern.data());
+		const uintptr_t address = FindPattern(
+			GetModule(moduleName.data()).first,
+			GetModule(moduleName.data()).second -
+			GetModule(moduleName.data()).first, pattern.data());
 
 		if (address == NULL)
 			throw std::runtime_error("Failed to find pattern");
 
-		auto reloffset = *reinterpret_cast<int32_t*>(address + offset) + sizeof(int32_t);
-		return (address + offset + reloffset);
+		const auto reloffset = *reinterpret_cast<int32_t*>(address + offset) + sizeof(int32_t);
+		return address + offset + reloffset;
 	}
 	throw std::runtime_error("Failed to find the module");
 }

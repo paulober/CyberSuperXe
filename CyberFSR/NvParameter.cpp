@@ -2,7 +2,7 @@
 #include "Config.h"
 #include "Util.h"
 #include "NvParameter.h"
-#include "CyberFsr.h"
+#include "CyberXe.h"
 
 void NvParameter::Set(const char* InName, unsigned long long InValue)
 {
@@ -12,43 +12,43 @@ void NvParameter::Set(const char* InName, unsigned long long InValue)
 
 void NvParameter::Set(const char* InName, float InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvFloat);
 }
 
 void NvParameter::Set(const char* InName, double InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvDouble);
 }
 
 void NvParameter::Set(const char* InName, unsigned int InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvUInt);
 }
 
 void NvParameter::Set(const char* InName, int InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvInt);
 }
 
 void NvParameter::Set(const char* InName, ID3D11Resource* InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvD3D11Resource);
 }
 
 void NvParameter::Set(const char* InName, ID3D12Resource* InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvD3D12Resource);
 }
 
 void NvParameter::Set(const char* InName, void* InValue)
 {
-	auto value = (unsigned long long*) & InValue;
+	auto value = reinterpret_cast<unsigned long long*>(&InValue);
 	Set_Internal(InName, *value, NvVoidPtr);
 }
 
@@ -59,37 +59,37 @@ NVSDK_NGX_Result NvParameter::Get(const char* InName, unsigned long long* OutVal
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, float* OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvFloat);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvFloat);
 }
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, double* OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvDouble);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvDouble);
 }
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, unsigned int* OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvUInt);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvUInt);
 }
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, int* OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvInt);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvInt);
 }
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, ID3D11Resource** OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvD3D11Resource);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvD3D11Resource);
 }
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, ID3D12Resource** OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvD3D12Resource);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvD3D12Resource);
 }
 
 NVSDK_NGX_Result NvParameter::Get(const char* InName, void** OutValue) const
 {
-	return Get_Internal(InName, (unsigned long long*)OutValue, NvVoidPtr);
+	return Get_Internal(InName, reinterpret_cast<unsigned long long*>(OutValue), NvVoidPtr);
 }
 
 void NvParameter::Reset()
@@ -98,12 +98,12 @@ void NvParameter::Reset()
 
 void NvParameter::Set_Internal(const char* InName, unsigned long long InValue, NvParameterType ParameterType)
 {
-	auto inValueFloat = (float*)&InValue;
-	auto inValueInt = (int*)&InValue;
-	auto inValueDouble = (double*)&InValue;
-	auto inValueUInt = (unsigned int*)&InValue;
+	auto inValueFloat = reinterpret_cast<float*>(&InValue);
+	auto inValueInt = reinterpret_cast<int*>(&InValue);
+	auto inValueDouble = reinterpret_cast<double*>(&InValue);
+	auto inValueUInt = reinterpret_cast<unsigned int*>(&InValue);
 	//Includes DirectX Resources
-	auto inValuePtr = (void*)InValue;
+	auto inValuePtr = reinterpret_cast<void*>(InValue);
 
 	switch (Util::NvParameterToEnum(InName))
 	{
@@ -168,38 +168,39 @@ void NvParameter::Set_Internal(const char* InName, unsigned long long InValue, N
 	case Util::NvParameter::DLSS_Input_Bias_Current_Color_Mask:
 		InputBiasCurrentColorMask = inValuePtr;
 		if (InputBiasCurrentColorMask && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)InputBiasCurrentColorMask)->SetName(L"Color");
+			static_cast<ID3D12Resource*>(InputBiasCurrentColorMask)->SetName(L"Color");
 		break;
 	case Util::NvParameter::Color:
 		Color = inValuePtr;
 		if (Color && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)Color)->SetName(L"Color");
+			static_cast<ID3D12Resource*>(Color)->SetName(L"Color");
 		break;
 	case Util::NvParameter::Depth:
 		Depth = inValuePtr;
 		if (Depth && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)Depth)->SetName(L"Depth");
+			static_cast<ID3D12Resource*>(Depth)->SetName(L"Depth");
 		break;
 	case Util::NvParameter::MotionVectors:
 		MotionVectors = inValuePtr;
 		if (MotionVectors && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)MotionVectors)->SetName(L"MotionVectors");
+			static_cast<ID3D12Resource*>(MotionVectors)->SetName(L"MotionVectors");
 		break;
 	case Util::NvParameter::Output:
 		Output = inValuePtr;
 		if (Output && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)Output)->SetName(L"Output");
+			static_cast<ID3D12Resource*>(Output)->SetName(L"Output");
 		break;
 	case Util::NvParameter::TransparencyMask:
 		TransparencyMask = inValuePtr;
 		if (TransparencyMask && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)TransparencyMask)->SetName(L"TransparencyMask");
+			static_cast<ID3D12Resource*>(TransparencyMask)->SetName(L"TransparencyMask");
 		break;
 	case Util::NvParameter::ExposureTexture:
 		ExposureTexture = inValuePtr;
 		if (ExposureTexture && ParameterType == NvParameterType::NvD3D12Resource)
-			((ID3D12Resource*)ExposureTexture)->SetName(L"ExposureTexture");
+			static_cast<ID3D12Resource*>(ExposureTexture)->SetName(L"ExposureTexture");
 		break;
+	default: break;
 	}
 }
 
@@ -208,13 +209,13 @@ NVSDK_NGX_Result NVSDK_CONV NVSDK_NGX_DLSS_GetStatsCallback(NVSDK_NGX_Parameter*
 
 NVSDK_NGX_Result NvParameter::Get_Internal(const char* InName, unsigned long long* OutValue, NvParameterType ParameterType) const
 {
-	auto outValueFloat = (float*)OutValue;
-	auto outValueInt = (int*)OutValue;
-	auto outValueDouble = (double*)OutValue;
-	auto outValueUInt = (unsigned int*)OutValue;
+	auto outValueFloat = reinterpret_cast<float*>(OutValue);
+	auto outValueInt = reinterpret_cast<int*>(OutValue);
+	auto outValueDouble = reinterpret_cast<double*>(OutValue);
+	auto outValueUInt = reinterpret_cast<unsigned int*>(OutValue);
 	auto outValueULL = (unsigned long long*)OutValue;
 	//Includes DirectX Resources
-	auto outValuePtr = (void**)OutValue;
+	auto outValuePtr = reinterpret_cast<void**>(OutValue);
 
 	switch (Util::NvParameterToEnum(InName))
 	{
@@ -347,8 +348,8 @@ void NvParameter::EvaluateRenderScale()
 	const std::optional<float> QualityRatio = GetQualityOverrideRatio(PerfQualityValue, config);
 
 	if (QualityRatio.has_value()) {
-		OutHeight = (unsigned int)((float)Height / QualityRatio.value());
-		OutWidth = (unsigned int)((float)Width / QualityRatio.value());
+		OutHeight = static_cast<unsigned int>(static_cast<float>(Height) / QualityRatio.value());
+		OutWidth = static_cast<unsigned int>(static_cast<float>(Width) / QualityRatio.value());
 	}
 	else {
 		const FfxFsr2QualityMode fsrQualityMode = DLSS2FSR2QualityTable(PerfQualityValue);
@@ -366,7 +367,7 @@ void NvParameter::EvaluateRenderScale()
 
 NVSDK_NGX_Result NVSDK_CONV NVSDK_NGX_DLSS_GetOptimalSettingsCallback(NVSDK_NGX_Parameter* InParams)
 {
-	auto* params = (NvParameter*)InParams;
+	auto* params = static_cast<NvParameter*>(InParams);
 	params->EvaluateRenderScale();
 	return NVSDK_NGX_Result_Success;
 }

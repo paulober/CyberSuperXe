@@ -5,10 +5,14 @@
 
 /*
 Cyberpunk doesn't reset the ComputeRootSignature after running DLSS.
-This is fine for DLSS itself because they only use CUDA stuff but breaks everything for implementations that use compute shaders
+This is fine for DLSS itself because they only use CUDA stuff but breaks everything for implementations that
+use compute shaders
 
-The only solution to bypass this problem in a safe manner is to hook the CreateCommandQueue function of the CommandLists VTable we get in NVSDK_NGX_D3D12_CreateFeature and after that hook the SetComputeRootSignature function of every created CommandQueue.
-This allows us to keep track of every ComputeRootSignature and match the RootSignature with the CommandList we get in NVSDK_NGX_D3D12_EvaluateFeature to restore it after FSR2 completes.
+The only solution to bypass this problem in a safe manner is to hook the CreateCommandQueue function of the
+CommandLists VTable we get in NVSDK_NGX_D3D12_CreateFeature and after that hook the SetComputeRootSignature
+function of every created CommandQueue.
+This allows us to keep track of every ComputeRootSignature and match the RootSignature with the CommandList we
+get in NVSDK_NGX_D3D12_EvaluateFeature to restore it after FSR2 completes.
 */
 
 SETCOMPUTEROOTSIGNATURE oSetComputeRootSignature = nullptr;
@@ -21,7 +25,7 @@ std::mutex rootSigMutex;
 
 #define INITIAL_THREAD_CAPACITY 128
 
-HANDLE g_hHeap = NULL;
+HANDLE g_hHeap = nullptr;
 
 #define THREAD_ACCESS \
     (THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION | THREAD_SET_CONTEXT)
@@ -37,8 +41,7 @@ static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 {
 	BOOL succeeded = FALSE;
 
-	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-	if (hSnapshot != INVALID_HANDLE_VALUE)
+	if (const HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0); hSnapshot != INVALID_HANDLE_VALUE)
 	{
 		THREADENTRY32 te;
 		te.dwSize = sizeof(THREADENTRY32);
@@ -51,12 +54,12 @@ static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 					&& te.th32OwnerProcessID == GetCurrentProcessId()
 					&& te.th32ThreadID != GetCurrentThreadId())
 				{
-					if (pThreads->pItems == NULL)
+					if (pThreads->pItems == nullptr)
 					{
 						pThreads->capacity = INITIAL_THREAD_CAPACITY;
-						pThreads->pItems
-							= (LPDWORD)HeapAlloc(g_hHeap, 0, pThreads->capacity * sizeof(DWORD));
-						if (pThreads->pItems == NULL)
+						pThreads->pItems = static_cast<LPDWORD>(
+							HeapAlloc(g_hHeap, 0, pThreads->capacity * sizeof(DWORD)));
+						if (pThreads->pItems == nullptr)
 						{
 							succeeded = FALSE;
 							break;
@@ -65,9 +68,9 @@ static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 					else if (pThreads->size >= pThreads->capacity)
 					{
 						pThreads->capacity *= 2;
-						LPDWORD p = (LPDWORD)HeapReAlloc(
-							g_hHeap, 0, pThreads->pItems, pThreads->capacity * sizeof(DWORD));
-						if (p == NULL)
+						auto p = static_cast<LPDWORD>(
+							HeapReAlloc(g_hHeap, 0, pThreads->pItems, pThreads->capacity * sizeof(DWORD)));
+						if (p == nullptr)
 						{
 							succeeded = FALSE;
 							break;
@@ -84,10 +87,10 @@ static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 			if (succeeded && GetLastError() != ERROR_NO_MORE_FILES)
 				succeeded = FALSE;
 
-			if (!succeeded && pThreads->pItems != NULL)
+			if (!succeeded && pThreads->pItems != nullptr)
 			{
 				HeapFree(g_hHeap, 0, pThreads->pItems);
-				pThreads->pItems = NULL;
+				pThreads->pItems = nullptr;
 			}
 		}
 		CloseHandle(hSnapshot);
@@ -99,20 +102,18 @@ static BOOL EnumerateThreads(PFROZEN_THREADS pThreads)
 static bool Freeze(PFROZEN_THREADS pThreads)
 {
 
-	pThreads->pItems = NULL;
+	pThreads->pItems = nullptr;
 	pThreads->capacity = 0;
 	pThreads->size = 0;
 	if (!EnumerateThreads(pThreads))
 	{
 		return false;
 	}
-	else if (pThreads->pItems != NULL)
+	else if (pThreads->pItems != nullptr)
 	{
-		UINT i;
-		for (i = 0; i < pThreads->size; ++i)
+		for (UINT i = 0; i < pThreads->size; ++i)
 		{
-			HANDLE hThread = OpenThread(THREAD_ACCESS, FALSE, pThreads->pItems[i]);
-			if (hThread != NULL)
+			if (const HANDLE hThread = OpenThread(THREAD_ACCESS, FALSE, pThreads->pItems[i]); hThread != nullptr)
 			{
 				SuspendThread(hThread);
 				CloseHandle(hThread);
@@ -125,13 +126,11 @@ static bool Freeze(PFROZEN_THREADS pThreads)
 
 static VOID Unfreeze(PFROZEN_THREADS pThreads)
 {
-	if (pThreads->pItems != NULL)
+	if (pThreads->pItems != nullptr)
 	{
-		UINT i;
-		for (i = 0; i < pThreads->size; ++i)
+		for (UINT i = 0; i < pThreads->size; ++i)
 		{
-			HANDLE hThread = OpenThread(THREAD_ACCESS, FALSE, pThreads->pItems[i]);
-			if (hThread != NULL)
+			if (const HANDLE hThread = OpenThread(THREAD_ACCESS, FALSE, pThreads->pItems[i]); hThread != nullptr)
 			{
 				ResumeThread(hThread);
 				CloseHandle(hThread);
@@ -163,7 +162,7 @@ void HookSetComputeRootSignature(ID3D12GraphicsCommandList* InCmdList)
 	{
 		oSetComputeRootSignature = *computeRootSigFuncVTable;
 
-		if (g_hHeap == NULL)
+		if (g_hHeap == nullptr)
 		{
 			g_hHeap = HeapCreate(0, 0, 0);
 		}

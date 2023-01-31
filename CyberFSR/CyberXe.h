@@ -23,7 +23,7 @@ public:
 
 	ankerl::unordered_dense::map <unsigned int, std::unique_ptr<FeatureContext>> Contexts;
 	FeatureContext* CreateContext();
-	void DeleteContext(NVSDK_NGX_Handle* handle);
+	void DeleteContext(const NVSDK_NGX_Handle* handle);
 
 	static std::shared_ptr<CyberFsrContext> instance()
 	{

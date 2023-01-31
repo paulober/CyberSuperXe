@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "Config.h"
-#include "CyberFsr.h"
+#include "CyberXe.h"
 #include "DirectXHooks.h"
 #include "Util.h"
 

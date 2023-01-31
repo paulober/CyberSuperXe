@@ -4,6 +4,7 @@
 class ViewMatrixHook
 {
 public:
+	virtual ~ViewMatrixHook() = default;
 	virtual float GetFov() = 0;
 	virtual float GetFarPlane() = 0;
 	virtual float GetNearPlane() = 0;

@@ -1,19 +1,29 @@
 #include "pch.h"
 #include "Config.h"
-#include "CyberFsr.h"
+#include "CyberXe.h"
 #include "DirectXHooks.h"
 #include "Util.h"
 
-NVSDK_NGX_API NVSDK_NGX_Result NVSDK_NGX_D3D12_Init_Ext(unsigned long long InApplicationId, const wchar_t* InApplicationDataPath,
-	ID3D12Device* InDevice, const NVSDK_NGX_FeatureCommonInfo* InFeatureInfo, NVSDK_NGX_Version InSDKVersion,
+NVSDK_NGX_API NVSDK_NGX_Result NVSDK_NGX_D3D12_Init_Ext(
+	unsigned long long InApplicationId,
+	const wchar_t* InApplicationDataPath,
+	ID3D12Device* InDevice,
+	const NVSDK_NGX_FeatureCommonInfo* InFeatureInfo,
+	NVSDK_NGX_Version InSDKVersion,
 	unsigned long long unknown0)
 {
 	return NVSDK_NGX_Result_Success;
 }
 
-NVSDK_NGX_Result NVSDK_NGX_D3D12_Init(unsigned long long InApplicationId, const wchar_t* InApplicationDataPath, ID3D12Device* InDevice, const NVSDK_NGX_FeatureCommonInfo* InFeatureInfo, NVSDK_NGX_Version InSDKVersion)
+NVSDK_NGX_Result NVSDK_NGX_D3D12_Init(
+	unsigned long long InApplicationId,
+	const wchar_t* InApplicationDataPath,
+	ID3D12Device* InDevice,
+	const NVSDK_NGX_FeatureCommonInfo* InFeatureInfo,
+	NVSDK_NGX_Version InSDKVersion)
 {
-	return NVSDK_NGX_D3D12_Init_Ext(InApplicationId, InApplicationDataPath, InDevice, InFeatureInfo, InSDKVersion, 0);
+	return NVSDK_NGX_D3D12_Init_Ext(
+		InApplicationId, InApplicationDataPath, InDevice, InFeatureInfo, InSDKVersion, 0);
 }
 
 NVSDK_NGX_API NVSDK_NGX_Result NVSDK_NGX_D3D12_Init_ProjectID(const char* InProjectId, NVSDK_NGX_EngineType InEngineType, const char* InEngineVersion, const wchar_t* InApplicationDataPath, ID3D12Device* InDevice, const NVSDK_NGX_FeatureCommonInfo* InFeatureInfo, NVSDK_NGX_Version InSDKVersion)
