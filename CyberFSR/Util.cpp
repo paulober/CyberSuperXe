@@ -30,6 +30,27 @@ fs::path Util::ExePath()
 	return exe;
 }
 
+/// Convert from xess_result_t to string.
+const char* Util::ResultToString(xess_result_t result)
+{
+	switch (result)
+	{
+	case XESS_RESULT_WARNING_NONEXISTING_FOLDER: return "Warning Nonexistent Folder";
+	case XESS_RESULT_SUCCESS: return "Success";
+	case XESS_RESULT_ERROR_UNSUPPORTED_DEVICE: return "Unsupported Device";
+	case XESS_RESULT_ERROR_UNSUPPORTED_DRIVER: return "Unsupported Driver";
+	case XESS_RESULT_ERROR_UNINITIALIZED: return "Uninitialized";
+	case XESS_RESULT_ERROR_INVALID_ARGUMENT: return "Invalid Argument";
+	case XESS_RESULT_ERROR_DEVICE_OUT_OF_MEMORY: return "Device Out of Memory";
+	case XESS_RESULT_ERROR_DEVICE: return "Device Error";
+	case XESS_RESULT_ERROR_NOT_IMPLEMENTED: return "Not Implemented";
+	case XESS_RESULT_ERROR_INVALID_CONTEXT: return "Invalid Context";
+	case XESS_RESULT_ERROR_OPERATION_IN_PROGRESS: return "Operation in Progress";
+	case XESS_RESULT_ERROR_UNKNOWN:
+	default: return "Unknown";
+	}
+}
+
 double Util::MillisecondsNow()
 {
 	static LARGE_INTEGER s_frequency;
@@ -40,11 +61,11 @@ double Util::MillisecondsNow()
 	{
 		LARGE_INTEGER now;
 		QueryPerformanceCounter(&now);
-		milliseconds = double(1000.0 * now.QuadPart) / s_frequency.QuadPart;
+		milliseconds = 1000.0 * now.QuadPart / s_frequency.QuadPart;
 	}
 	else
 	{
-		milliseconds = double(GetTickCount());
+		milliseconds = static_cast<double>(GetTickCount());
 	}
 
 	return milliseconds;

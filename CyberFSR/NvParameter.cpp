@@ -282,27 +282,28 @@ NVSDK_NGX_Result NvParameter::Get_Internal(const char* InName, unsigned long lon
 }
 
 // EvaluateRenderScale helper
-inline FfxFsr2QualityMode DLSS2FSR2QualityTable(const NVSDK_NGX_PerfQuality_Value input)
+inline _xess_quality_settings_t DLSS2XeSSQualityTable(const NVSDK_NGX_PerfQuality_Value input)
 {
-	FfxFsr2QualityMode output;
+	_xess_quality_settings_t output;
 
 	switch (input)
 	{
-	case NVSDK_NGX_PerfQuality_Value_UltraPerformance:
-		output = FFX_FSR2_QUALITY_MODE_ULTRA_PERFORMANCE;
+	case NVSDK_NGX_PerfQuality_Value_UltraQuality:
+		output = XESS_QUALITY_SETTING_ULTRA_QUALITY;
 		break;
 	case NVSDK_NGX_PerfQuality_Value_MaxPerf:
-		output = FFX_FSR2_QUALITY_MODE_PERFORMANCE;
+		output = XESS_QUALITY_SETTING_PERFORMANCE;
 		break;
 	case NVSDK_NGX_PerfQuality_Value_Balanced:
-		output = FFX_FSR2_QUALITY_MODE_BALANCED;
+		output = XESS_QUALITY_SETTING_BALANCED;
 		break;
 	case NVSDK_NGX_PerfQuality_Value_MaxQuality:
-		output = FFX_FSR2_QUALITY_MODE_QUALITY;
+		output = XESS_QUALITY_SETTING_QUALITY;
 		break;
-	case NVSDK_NGX_PerfQuality_Value_UltraQuality:
+	case NVSDK_NGX_PerfQuality_Value_UltraPerformance:
 	default:
-		output = (FfxFsr2QualityMode)5; //Set out-of-range value for non-existing fsr ultra quality mode
+		//Set out-of-range value for non-existing XeSS ultra performance mode
+		output = static_cast<_xess_quality_settings_t>(XESS_QUALITY_SETTING_PERFORMANCE + 5);
 		break;
 	}
 
@@ -347,18 +348,37 @@ void NvParameter::EvaluateRenderScale()
 
 	const std::optional<float> QualityRatio = GetQualityOverrideRatio(PerfQualityValue, config);
 
-	if (QualityRatio.has_value()) {
+	if (QualityRatio.has_value())
+	{
 		OutHeight = static_cast<unsigned int>(static_cast<float>(Height) / QualityRatio.value());
 		OutWidth = static_cast<unsigned int>(static_cast<float>(Width) / QualityRatio.value());
 	}
-	else {
-		const FfxFsr2QualityMode fsrQualityMode = DLSS2FSR2QualityTable(PerfQualityValue);
+	else
+	{
+		const _xess_quality_settings_t xessQualityMode = DLSS2XeSSQualityTable(PerfQualityValue);
 
-		if (fsrQualityMode < 5) {
-			ffxFsr2GetRenderResolutionFromQualityMode(&OutWidth, &OutHeight, Width, Height, fsrQualityMode);
+		if (xessQualityMode < XESS_QUALITY_SETTING_PERFORMANCE+5)
+		{
+			// ffxFsr2GetRenderResolutionFromQualityMode(&OutWidth, &OutHeight, Width, Height, xessQualityMode);
+			const auto deviceContext = CyberFsrContext::instance()->Contexts.begin()->second.get();
+
+			if (deviceContext != nullptr)
+			{
+				xess_2d_t inputRes = { OutWidth, OutHeight };
+				const xess_2d_t outputRes { Width, Height };
+				const xess_result_t result = xessGetInputResolution(
+					deviceContext->XeSSContext, &outputRes, xessQualityMode, &inputRes);
+				assert(result == XESS_RESULT_SUCCESS);
+				if (result == XESS_RESULT_SUCCESS)
+				{
+					OutWidth = inputRes.x;
+					OutHeight = inputRes.y;
+				}
+			}
 		}
-		else {
-			//Ultra Quality Mode
+		else
+		{
+			// Ultra Quality Mode
 			OutHeight = Height;
 			OutWidth = Width;
 		}

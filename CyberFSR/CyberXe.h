@@ -1,8 +1,10 @@
+// ReSharper disable CppInconsistentNaming
 #pragma once
 #include "pch.h"
 #include "ViewMatrixHook.h"
 #include "NvParameter.h"
 #include "DebugOverlay.h"
+#include <xess/xess.h>
 
 class FeatureContext;
 
@@ -38,8 +40,10 @@ public:
 	std::unique_ptr<ViewMatrixHook> ViewMatrix;
 	NVSDK_NGX_Handle Handle;
 	ID3D12Device* DxDevice;
-	FfxFsr2Context FsrContext;
-	FfxFsr2ContextDescription FsrContextDescription;
+	//FfxFsr2Context FsrContext;
+	//FfxFsr2ContextDescription FsrContextDescription;
+	xess_context_handle_t XeSSContext;
+	xess_d3d12_init_params_t XeSSInitParams;
 	std::unique_ptr<DebugOverlay> DebugLayer;
 	std::vector<unsigned char> ScratchBuffer;
 

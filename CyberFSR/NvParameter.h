@@ -12,6 +12,15 @@ enum NvParameterType {
 	NvVoidPtr
 };
 
+// Quality level of XeSS
+enum eQualityLevel
+{
+	kQualityPerformance = 0,
+	kQualityBalanced,
+	kQualityQuality,
+	kQualityUltraQuality
+};
+
 struct NvParameter : NVSDK_NGX_Parameter
 {
 	virtual ~NvParameter() = default;

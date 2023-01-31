@@ -28,6 +28,7 @@ public:
 	std::optional<bool> HDR;
 
 	// Motion
+	std::optional<bool> MotionVectors;
 	std::optional<bool> JitterCancellation;
 	std::optional<bool> DisplayResolution;
 

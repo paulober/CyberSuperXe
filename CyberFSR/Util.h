@@ -3,6 +3,9 @@
 
 namespace Util
 {
+	/// Convert from xess_result_t to string.
+	extern const char* ResultToString(xess_result_t result);
+	
 	std::filesystem::path ExePath();
 
 	std::filesystem::path DllPath();
